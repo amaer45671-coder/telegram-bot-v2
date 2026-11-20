@@ -4,76 +4,64 @@ from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandle
 
 TOKEN = os.getenv("BOT_TOKEN")
 
-# ============ هنا عدّل خدماتك ============
-SERVICES = {
-    "service1": {
-        "name": "🛍️ خدمة 1 - متجر",
-        "desc": "هنا اكتب وصف الخدمة الاولى، الاسعار، وطريقة الطلب.\n\nللطلب تواصل معنا: @username"
-    },
-    "service2": {
-        "name": "🎨 خدمة 2 - تصميم",
-        "desc": "هنا اكتب وصف خدمة التصميم.\n\nالاسعار تبدأ من: ...\nللطلب: @username"
-    },
-    "service3": {
-        "name": "💻 خدمة 3 - برمجة",
-        "desc": "هنا اكتب وصف خدمة البرمجة.\n\nللطلب: @username"
-    },
-    "service4": {
-        "name": "📞 تواصل معنا",
-        "desc": "📞 للتواصل والاستفسار:\n\nتيليجرام: @username\nواتساب: +967 XXX XXX XXX\n\nنرد عليك بأسرع وقت ❤️"
-    }
-}
-# ==========================================
+# الاسم المزخرف
+BRAND = "𓆩✦ 𝐀𝐋-𝐐𝐈𝐘𝐀𝐃𝐀 • شَــوقِــي ✦𓆪"
+USERNAME = "@JerryKim78"
 
-def main_menu():
-    keyboard = []
-    for key, s in SERVICES.items():
-        keyboard.append([InlineKeyboardButton(s["name"], callback_data=key)])
-    keyboard.append([InlineKeyboardButton("ℹ️ من نحن", callback_data="about")])
-    return InlineKeyboardMarkup(keyboard)
+SERVICES = {
+    "store": {
+        "name": "🛒 متجر القيادة",
+        "desc": "متجر القيادة شوقي\n\nكل المنتجات والخدمات المتوفرة\nالاسعار - طريقة الطلب - التوصيل\n\nللطلب تواصل معنا: " + USERNAME
+    },
+    "design": {
+        "name": "🎨 تصميم",
+        "desc": "خدمة التصميم\n\n- تصميم شعارات\n- تصميم منشورات\n- تصميم هويات بصرية\n\nللطلب: " + USERNAME
+    },
+    "coding": {
+        "name": "💻 برمجة",
+        "desc": "خدمة البرمجة\n\n- برمجة بوتات تليجرام\n- برمجة مواقع\n- برمجة تطبيقات\n\nللطلب: " + USERNAME
+    },
+    "marketing": {
+        "name": "📣 تسويق",
+        "desc": "خدمة التسويق\n\n- ادارة حسابات\n- زيادة متابعين\n- اعلانات ممولة\n\nللطلب: " + USERNAME
+    },
+    "support": {
+        "name": "📞 تواصل معنا",
+        "desc": "تواصل مع القيادة شوقي شخصيا\n\nتليجرام: " + USERNAME + "\n\nنرد عليك باسرع وقت"
+    },
+}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [[InlineKeyboardButton(v["name"], callback_data=k)] for k, v in SERVICES.items()]
     text = (
-        "👋 أهلاً فيك في بوت خدماتنا!\n\n"
-        "اختر الخدمة اللي تريدها من الأسفل 👇\n"
-        "واضغط عليها عشان تشوف التفاصيل والأسعار"
+        f"{BRAND}\n"
+        "━━━━━━━━━━━━━━━\n"
+        "اهلا فيك في بوت القيادة شوقي شخصيا 👑\n\n"
+        "اختر الخدمة اللي تبيها من القائمة تحت:\n"
+        "━━━━━━━━━━━━━━━"
     )
-    await update.message.reply_text(text, reply_markup=main_menu())
+    if update.message:
+        await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+    else:
+        await update.callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
 
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    
-    if query.data == "about":
-        await query.edit_message_text(
-            "ℹ️ من نحن:\n\nنحن نقدم أفضل الخدمات بجودة عالية وسعر مناسب.\n\nاضغط رجوع للعودة للقائمة الرئيسية.",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع", callback_data="back")]])
-        )
-        return
-
     if query.data == "back":
-        await query.edit_message_text(
-            "👋 أهلاً فيك في بوت خدماتنا!\n\nاختر الخدمة اللي تريدها 👇",
-            reply_markup=main_menu()
-        )
+        await start(update, context)
         return
-
     service = SERVICES.get(query.data)
     if service:
+        keyboard = [[InlineKeyboardButton("🔙 رجوع للقائمة", callback_data="back")]]
         await query.edit_message_text(
-            f"{service['name']}\n\n{service['desc']}",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 رجوع للقائمة", callback_data="back")],
-                [InlineKeyboardButton("📞 اطلب الان", callback_data="service4")]
-            ])
+            f"{BRAND}\n━━━━━━━━━━━━━━━\n\n{service['name']}\n\n{service['desc']}",
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-def main():
+if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button_handler))
-    print("Bot is running...")
+    app.add_handler(CallbackQueryHandler(button))
+    print("Bot القيادة شوقي is running...")
     app.run_polling()
-
-if __name__ == "__main__":
-    main()
