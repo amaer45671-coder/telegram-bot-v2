@@ -1,0 +1,79 @@
+import os
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
+
+TOKEN = os.getenv("BOT_TOKEN")
+
+# ============ هنا عدّل خدماتك ============
+SERVICES = {
+    "service1": {
+        "name": "🛍️ خدمة 1 - متجر",
+        "desc": "هنا اكتب وصف الخدمة الاولى، الاسعار، وطريقة الطلب.\n\nللطلب تواصل معنا: @username"
+    },
+    "service2": {
+        "name": "🎨 خدمة 2 - تصميم",
+        "desc": "هنا اكتب وصف خدمة التصميم.\n\nالاسعار تبدأ من: ...\nللطلب: @username"
+    },
+    "service3": {
+        "name": "💻 خدمة 3 - برمجة",
+        "desc": "هنا اكتب وصف خدمة البرمجة.\n\nللطلب: @username"
+    },
+    "service4": {
+        "name": "📞 تواصل معنا",
+        "desc": "📞 للتواصل والاستفسار:\n\nتيليجرام: @username\nواتساب: +967 XXX XXX XXX\n\nنرد عليك بأسرع وقت ❤️"
+    }
+}
+# ==========================================
+
+def main_menu():
+    keyboard = []
+    for key, s in SERVICES.items():
+        keyboard.append([InlineKeyboardButton(s["name"], callback_data=key)])
+    keyboard.append([InlineKeyboardButton("ℹ️ من نحن", callback_data="about")])
+    return InlineKeyboardMarkup(keyboard)
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = (
+        "👋 أهلاً فيك في بوت خدماتنا!\n\n"
+        "اختر الخدمة اللي تريدها من الأسفل 👇\n"
+        "واضغط عليها عشان تشوف التفاصيل والأسعار"
+    )
+    await update.message.reply_text(text, reply_markup=main_menu())
+
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    if query.data == "about":
+        await query.edit_message_text(
+            "ℹ️ من نحن:\n\nنحن نقدم أفضل الخدمات بجودة عالية وسعر مناسب.\n\nاضغط رجوع للعودة للقائمة الرئيسية.",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع", callback_data="back")]])
+        )
+        return
+
+    if query.data == "back":
+        await query.edit_message_text(
+            "👋 أهلاً فيك في بوت خدماتنا!\n\nاختر الخدمة اللي تريدها 👇",
+            reply_markup=main_menu()
+        )
+        return
+
+    service = SERVICES.get(query.data)
+    if service:
+        await query.edit_message_text(
+            f"{service['name']}\n\n{service['desc']}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 رجوع للقائمة", callback_data="back")],
+                [InlineKeyboardButton("📞 اطلب الان", callback_data="service4")]
+            ])
+        )
+
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(button_handler))
+    print("Bot is running...")
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
